@@ -126,16 +126,17 @@
                 lucide.createIcons();
 
                 // *** สำคัญ: นำ URL ที่ได้จาก Google Apps Script มาใส่ในเครื่องหมายคำพูดด้านล่างนี้ ***
-                const GOOGLE_SCRIPT_URL = 'https://script.google.com/a/macros/thestandard.co/s/AKfycbxHY5VLqgesv9xf2OTHs914FpxHrEfbEIglhjXlWvhvm4YC-tfOnqShyH5wevDkvbqY/exec';
+                // ตัวอย่างที่ถูกต้อง: const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz.../exec';
+                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXTbU5qVPSQ8Q8Au4zktK3blYQ3Mr7fqM8_-8OASo/dev';
 
-                if(GOOGLE_SCRIPT_URL === 'https://script.google.com/a/macros/thestandard.co/s/AKfycbxHY5VLqgesv9xf2OTHs914FpxHrEfbEIglhjXlWvhvm4YC-tfOnqShyH5wevDkvbqY/exec') {
+                if(!GOOGLE_SCRIPT_URL.startsWith('https://script.google.com')) {
                      viewerContainer.innerHTML = `
                         <div class="text-center text-amber-500 max-w-md">
                             <i data-lucide="alert-circle" class="w-16 h-16 mx-auto mb-2 opacity-50"></i>
-                            <p class="text-lg font-bold">รอการตั้งค่า URL</p>
-                            <p class="text-sm mt-2">กรุณานำ URL ของ Google Apps Script มาใส่ในโค้ด (บรรทัดที่ 113) เพื่อให้ระบบทำงานได้ครับ</p>
+                            <p class="text-lg font-bold">รอการตั้งค่า URL ให้ถูกต้อง</p>
+                            <p class="text-sm mt-2">กรุณาแก้ไขโค้ดด้านขวามือ (ประมาณบรรทัดที่ 113) โดยนำ URL ที่ได้จาก Google มาแทนที่ข้อความภาษาไทย และต้องมีเครื่องหมาย ' ' ครอบหัวท้ายด้วยครับ</p>
                         </div>`;
-                    showMessage('info', 'กรุณาตั้งค่า Google Apps Script ก่อนใช้งานฟังก์ชัน Word');
+                    showMessage('info', 'รูปแบบ URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://script.google.com');
                     lucide.createIcons();
                     return;
                 }
@@ -237,3 +238,5 @@
     </script>
 </body>
 </html>
+
+
