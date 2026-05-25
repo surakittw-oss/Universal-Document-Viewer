@@ -6,9 +6,6 @@
     <title>Universal Document Viewer</title>
     <!-- โหลด Tailwind CSS สำหรับตกแต่ง UI -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- โหลด Libraries สำหรับเปิดไฟล์ .docx -->
-    <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
-    <script src="https://unpkg.com/docx-preview/dist/docx-preview.min.js"></script>
     <!-- โหลด Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -30,12 +27,12 @@
             <i data-lucide="file-text" class="w-6 h-6"></i>
             <h1 class="text-xl font-bold">Universal Document Viewer</h1>
         </div>
-        <p class="text-sm opacity-80 hidden md:block">ไม่ต้องง้อโปรแกรม ก็เปิดไฟล์ได้</p>
+        <p class="text-sm opacity-80 hidden md:block">แสดงผลเอกสารแม่นยำ 100% (Powered by Google)</p>
     </header>
 
     <main class="max-w-[1400px] w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 h-[calc(100vh-80px)]">
         
-        <!-- แถบด้านข้าง: ส่วนอัปโหลดไฟล์ (ปรับให้เล็กลง) -->
+        <!-- แถบด้านข้าง: ส่วนอัปโหลดไฟล์ -->
         <div class="w-full md:w-72 lg:w-80 flex flex-col gap-4 flex-shrink-0">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-center">
                 <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.doc,.pages" />
@@ -54,7 +51,7 @@
             <div id="messageBox" class="p-4 rounded-lg hidden text-left shadow-sm"></div>
         </div>
 
-        <!-- พื้นที่แสดงผลเอกสาร (ย้ายมาอยู่ด้านขวาและขยายเต็มพื้นที่) -->
+        <!-- พื้นที่แสดงผลเอกสาร -->
         <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full min-h-[500px]">
             <div class="bg-gray-100 border-b border-gray-200 px-4 py-3 flex justify-between items-center">
                 <h2 class="font-semibold text-gray-700 flex items-center gap-2 text-sm md:text-base">
@@ -106,35 +103,89 @@
 
             hideMessage();
             fileNameDisplay.textContent = file.name;
-            viewerContainer.innerHTML = '<div class="animate-pulse text-gray-500">กำลังประมวลผลเอกสาร...</div>';
-
+            
             const extension = file.name.split('.').pop().toLowerCase();
 
-            // 1. จัดการไฟล์ PDF
+            // 1. จัดการไฟล์ PDF (เปิดบน Browser ได้เลย)
             if (extension === 'pdf') {
-                // สร้าง Object URL จากไฟล์ เพื่อให้ Browser เปิด PDF ได้โดยตรง
-                // วิธีนี้ดีที่สุดเพราะ Browser จะแสดง Comment/Annotation ของ PDF ได้อย่างสมบูรณ์
+                viewerContainer.innerHTML = '<div class="animate-pulse text-gray-500">กำลังประมวลผล PDF...</div>';
                 const fileURL = URL.createObjectURL(file);
                 viewerContainer.innerHTML = `<iframe src="${fileURL}" class="w-full h-full border-none"></iframe>`;
-                showMessage('success', '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i> เปิดไฟล์ PDF สำเร็จ คุณสามารถดูคอมเมนต์ในเอกสารได้เลย');
+                showMessage('success', '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i> เปิดไฟล์ PDF สำเร็จ คุณสามารถดูคอมเมนต์ได้');
                 lucide.createIcons();
             } 
             
-            // 2. จัดการไฟล์ .docx
+            // 2. จัดการไฟล์ .docx (ส่งไปแปลงที่ Google Apps Script)
             else if (extension === 'docx') {
-                viewerContainer.innerHTML = '<div id="docx-container" class="w-full min-h-full bg-white p-8"></div>';
-                const docxContainer = document.getElementById('docx-container');
-                
-                // ใช้ docx-preview render ไฟล์
-                docx.renderAsync(file, docxContainer)
-                    .then(() => {
-                        showMessage('info', '<i data-lucide="info" class="w-4 h-4 inline mr-1"></i> เปิดไฟล์ .docx สำเร็จ<br/><span class="text-xs font-normal opacity-70 mt-1 block">*รูปแบบและการจัดหน้าอาจไม่เหมือนต้นฉบับ 100% เนื่องจากเป็นการดึงข้อมูลเบื้องต้นมาแสดงผลบนหน้าเว็บ</span>');
+                viewerContainer.innerHTML = `
+                    <div class="animate-pulse text-blue-500 flex flex-col items-center gap-3">
+                        <i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i>
+                        <p class="font-medium">กำลังส่งไฟล์ให้ Google ประมวลผล...</p>
+                        <p class="text-xs text-gray-500">(อาจใช้เวลา 5-10 วินาที ขึ้นอยู่กับขนาดไฟล์)</p>
+                    </div>`;
+                lucide.createIcons();
+
+                // *** สำคัญ: นำ URL ที่ได้จาก Google Apps Script มาใส่ในเครื่องหมายคำพูดด้านล่างนี้ ***
+                const GOOGLE_SCRIPT_URL = 'https://script.google.com/a/macros/thestandard.co/s/AKfycbxHY5VLqgesv9xf2OTHs914FpxHrEfbEIglhjXlWvhvm4YC-tfOnqShyH5wevDkvbqY/exec';
+
+                if(GOOGLE_SCRIPT_URL === 'https://script.google.com/a/macros/thestandard.co/s/AKfycbxHY5VLqgesv9xf2OTHs914FpxHrEfbEIglhjXlWvhvm4YC-tfOnqShyH5wevDkvbqY/exec') {
+                     viewerContainer.innerHTML = `
+                        <div class="text-center text-amber-500 max-w-md">
+                            <i data-lucide="alert-circle" class="w-16 h-16 mx-auto mb-2 opacity-50"></i>
+                            <p class="text-lg font-bold">รอการตั้งค่า URL</p>
+                            <p class="text-sm mt-2">กรุณานำ URL ของ Google Apps Script มาใส่ในโค้ด (บรรทัดที่ 113) เพื่อให้ระบบทำงานได้ครับ</p>
+                        </div>`;
+                    showMessage('info', 'กรุณาตั้งค่า Google Apps Script ก่อนใช้งานฟังก์ชัน Word');
+                    lucide.createIcons();
+                    return;
+                }
+
+                // อ่านไฟล์เป็น Base64
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Data = e.target.result.split(',')[1];
+                    
+                    const formData = new FormData();
+                    formData.append('fileData', base64Data);
+                    formData.append('fileName', file.name);
+                    formData.append('mimeType', file.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+                    // ส่งไปให้ Google Apps Script แปลงไฟล์
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.status === 'success') {
+                            // นำ Base64 PDF ที่ได้กลับมาแปลงเพื่อเปิดใน iframe
+                            const pdfData = atob(result.pdfData);
+                            const pdfArray = new Uint8Array(pdfData.length);
+                            for (let i = 0; i < pdfData.length; i++) {
+                                pdfArray[i] = pdfData.charCodeAt(i);
+                            }
+                            const pdfBlob = new Blob([pdfArray], { type: 'application/pdf' });
+                            const pdfUrl = URL.createObjectURL(pdfBlob);
+                            
+                            viewerContainer.innerHTML = `<iframe src="${pdfUrl}#toolbar=0" class="w-full h-full border-none"></iframe>`;
+                            showMessage('success', '<i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i> แปลงและแสดงผลด้วย Google Engine สำเร็จ รูปแบบเหมือนต้นฉบับ 100%!');
+                        } else {
+                            throw new Error(result.message);
+                        }
                         lucide.createIcons();
                     })
-                    .catch((err) => {
-                        viewerContainer.innerHTML = '';
-                        showMessage('error', 'เกิดข้อผิดพลาดในการเปิดไฟล์ Word: ' + err.message);
+                    .catch(error => {
+                        viewerContainer.innerHTML = `
+                            <div class="text-center text-red-500 max-w-md">
+                                <i data-lucide="x-circle" class="w-16 h-16 mx-auto mb-2 opacity-50"></i>
+                                <p class="text-lg font-bold">การแปลงไฟล์ล้มเหลว</p>
+                                <p class="text-sm mt-2">${error.message}</p>
+                            </div>`;
+                        showMessage('error', 'ข้อผิดพลาด: โปรดตรวจสอบ URL ของ Google Script และการตั้งค่าสิทธิ์ให้เป็น Anyone (ทุกคน)');
+                        lucide.createIcons();
                     });
+                };
+                reader.readAsDataURL(file);
             } 
             
             // 3. จัดการไฟล์ที่ไม่รองรับ (.pages, .doc)
@@ -142,12 +193,12 @@
                 viewerContainer.innerHTML = `
                     <div class="text-center text-red-500">
                         <i data-lucide="alert-triangle" class="w-16 h-16 mx-auto mb-2 opacity-50"></i>
-                        <p class="text-lg font-bold">ไม่รองรับไฟล์สกุลนี้บน Web Browser</p>
+                        <p class="text-lg font-bold">ไม่รองรับไฟล์สกุลนี้</p>
                     </div>`;
                 
                 let advice = extension === 'pages' 
-                    ? 'ไฟล์ <b>.pages</b> เป็นระบบปิดของ Apple ไม่สามารถเปิดบนเว็บโดยตรงได้ แนะนำให้ลูกค้า Export เป็น PDF หรือ Word ก่อนส่งครับ'
-                    : 'ไฟล์ <b>.doc</b> เป็นไฟล์ Word รุ่นเก่ามาก (ก่อนปี 2007) ระบบรองรับเฉพาะ .docx ครับ แนะนำให้ Save As เป็น .docx หรือ PDF ครับ';
+                    ? 'ไฟล์ <b>.pages</b> ไม่สามารถแปลงได้ แนะนำให้ลูกค้า Export เป็น PDF หรือ Word (.docx) ก่อนส่งครับ'
+                    : 'ไฟล์ <b>.doc</b> เป็นไฟล์รุ่นเก่ามาก แนะนำให้ Save As เป็น .docx ก่อนครับ';
                 
                 showMessage('error', advice);
                 lucide.createIcons();
@@ -179,7 +230,6 @@
             
             if (e.dataTransfer.files.length) {
                 fileInput.files = e.dataTransfer.files;
-                // กระตุ้นให้เกิด event change
                 const event = new Event('change');
                 fileInput.dispatchEvent(event);
             }
